@@ -1,0 +1,8 @@
+/* src/index.css */
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* เพิ่ม Transition ให้พื้นหลังเปลี่ยนสีแบบนุ่มนวลขึ้น */
+html {
+  @apply transition-colors duration-300 ease-in-out;
+}
