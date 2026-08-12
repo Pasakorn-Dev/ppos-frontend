@@ -11,7 +11,6 @@ export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
-  // จัดการ Dark/Light Mode
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -26,13 +25,25 @@ export default function Layout() {
   // ตรวจสอบสิทธิ์และดึงเมนู
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
+    const storedUser = localStorage.getItem('user');
+
+    // ถ้าไม่มี Token หรือข้อมูล User ไม่ถูกต้อง ให้ดีดกลับไปหน้า Login ทันที
+    if (!token || !storedUser || storedUser === 'undefined' || storedUser === 'null') {
+      localStorage.clear();
+      navigate('/login', { replace: true });
       return;
     }
 
-    setUser(JSON.parse(localStorage.getItem('user')));
+    try {
+      setUser(JSON.parse(storedUser));
+    } catch (error) {
+      console.error('Invalid user session', error);
+      localStorage.clear();
+      navigate('/login', { replace: true });
+      return;
+    }
 
+    // ดึงเมนูตามสิทธิ์
     fetch('http://localhost:5000/api/menus', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -40,23 +51,29 @@ export default function Layout() {
       .then(data => {
         if (data.success) {
           setMenus(data.data);
-          // เปิดกลุ่มเมนูอัตโนมัติตาม URL ปัจจุบัน
           const currentMenu = data.data.find(m => m.link === location.pathname);
           if (currentMenu && currentMenu.parent_id !== 0) {
              setExpandedMenu(currentMenu.parent_id);
           }
+        } else {
+          // ถ้า Token หมดอายุหรือไม่ถูกต้อง
+          localStorage.clear();
+          navigate('/login', { replace: true });
         }
       })
-      .catch(err => console.error('Error fetching menus:', err));
+      .catch(err => {
+        console.error('Error fetching menus:', err);
+      });
   }, [navigate, location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
+    localStorage.clear();
+    navigate('/login', { replace: true });
   };
 
-  if (!user) return <div className="h-screen flex items-center justify-center dark:bg-gray-900 dark:text-white">กำลังตรวจสอบสิทธิ์...</div>;
+  if (!user) {
+    return <div className="h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 dark:text-white">กำลังโหลดข้อมูล...</div>;
+  }
 
   const mainMenus = menus.filter(m => m.parent_id === 0 || !m.parent_id);
 
@@ -128,7 +145,7 @@ export default function Layout() {
           </div>
         </header>
 
-        {/* จุดที่เนื้อหาของแต่ละหน้าจะมาโผล่ตรงนี้ (Outlet) */}
+        {/* จุดแสดงเนื้อหาของแต่ละหน้า */}
         <div className="flex-1 overflow-y-auto">
           <Outlet />
         </div>
