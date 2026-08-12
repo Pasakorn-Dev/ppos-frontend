@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Layout from './components/Layout'; // นำเข้า Layout ที่เราเพิ่งสร้าง
 import Dashboard from './pages/Dashboard';
 import Branches from './pages/Branches';
+import Products from './pages/Products'; // นำเข้าหน้า Products
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/branches" element={<Branches />} />
+          <Route path="/products" element={<Products />} />
         </Route>
       </Routes>
     </BrowserRouter>
